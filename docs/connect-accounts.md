@@ -47,7 +47,12 @@ Page**. Both are free switches.
    - Tick that you agree → **Continue** → **Create**
 5. **Add the YouTube permission.** **Data Access** → **Add or remove scopes** → find
    `.../auth/youtube` ("Manage your YouTube account") → tick it → **Update** → **Save**.
-6. **Publish it.** **Audience** → **Publish app** → **Confirm**. The status must say **In production**.
+6. **Fill in Branding, then publish.** "Publish app" stays grey until the **Branding** page is complete.
+   - On **Branding**, pick your **User support email** and type your email under **Developer contact
+     information** (at the bottom). Click **Save**.
+   - **Don't upload a logo.** A logo means Google must verify the app first.
+   - Leave **App domain** (home page, privacy policy, terms) and **Authorized domains** empty.
+   - Then **Audience** → **Publish app** → **Confirm**. The status must say **In production**.
    - Important: in "Testing", Google logs PostKaro out **every 7 days**.
    - If Google says the app needs verification, you can ignore it. That is only for apps used by
      strangers, and this one is just for you.
