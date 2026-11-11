@@ -35,7 +35,7 @@ post anything you did not schedule yourself.
 - Nothing is shared with the makers of PostKaro or with anyone else.
 
 ## How to remove your data
-- **Disconnect** an account on PostKaro's ⚙ page. This deletes its login from your computer and asks
+- **Disconnect** an account on PostKaro's Accounts page. This deletes its login from your computer and asks
   Google or Meta to cancel PostKaro's access.
 - **Cancel access yourself:**
   - Google: <https://myaccount.google.com/permissions>

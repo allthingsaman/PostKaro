@@ -149,8 +149,13 @@ def state(request, body):
 
 
 def batches(request, body):
-    return db.rows('SELECT b.id, b.project, b.title, b.channel, b.created, COUNT(DISTINCT c.id) clips, '
-                   "SUM(p.state='draft' AND p.enabled AND c.removed=0) drafts, SUM(p.state='live') live "
+    active = ','.join(f"'{x}'" for x in (*db.ACTIVE, 'missed'))
+    return db.rows('SELECT b.id, b.project, b.title, b.channel, b.created, '
+                   'COUNT(DISTINCT CASE WHEN c.removed=0 THEN c.id END) clips, '
+                   'MIN(CASE WHEN c.removed=0 THEN c.id END) first_clip, '
+                   "SUM(p.state='draft' AND p.enabled AND c.removed=0) drafts, "
+                   f'SUM(p.state IN ({active})) scheduled, '
+                   "SUM(p.state='live') live, SUM(p.state='failed') failed "
                    'FROM batches b LEFT JOIN clips c ON c.batch_id=b.id LEFT JOIN posts p ON p.clip_id=c.id '
                    'GROUP BY b.id ORDER BY b.id DESC')
 
@@ -245,7 +250,7 @@ def schedule(request, body):
             continue
         why = list(rules.check(p['platform'], p['title'], p['body'], p['clip'])[0])
         if not db.active_account(p['platform']):
-            why.append(f"{settings.NAMES[p['platform']]} is not connected (⚙ page).")
+            why.append(f"{settings.NAMES[p['platform']]} is not connected (Accounts page).")
         if not Path(p['clip']['file']).exists():
             why.append('The video file is gone from its folder.')
         when = db.parse(p['when_utc'])
@@ -325,6 +330,7 @@ def listing(states, order, limit=300):
                      f"WHERE p.state IN ({','.join('?' * len(states))}) ORDER BY {order} LIMIT {limit}", states):
         v = post_view(p, {'duration': p['duration'], 'size': p['size']}, s)
         v.update(no=p['no'], clip_title=p['clip_title'], video=p['video'] or p['project'], batch=p['batch'],
+                 clip_id=p['clip_id'], thumb=f"/media/thumb/{p['clip_id']}",
                  posted=settings.to_local(db.parse(p['posted_at']), s) if p['posted_at'] else '',
                  updated=settings.to_local(db.parse(p['updated']), s) if p['updated'] else '')
         out.append(v)

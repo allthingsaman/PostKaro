@@ -4,22 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="pk-key" content="{{KEY}}">
+<meta name="color-scheme" content="dark">
 <title>PostKaro</title>
+<link rel="icon" type="image/png" href="/static/img/favicon.png">
+<link rel="preload" href="/static/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/style.css?v={{VERSION}}">
 </head>
 <body>
-<header class="top">
-  <a class="logo" href="#/">Post<b>Karo</b></a>
-  <nav>
-    <a href="#/" data-nav="post">Post</a>
-    <a href="#/queue" data-nav="queue">Queue <span class="count" id="qcount"></span></a>
-    <a href="#/posted" data-nav="posted">Posted</a>
+<header class="topbar">
+  <a class="brand" href="#/" aria-label="PostKaro home"><img src="/static/img/logo.png" alt="" width="28" height="28"><span>PostKaro</span></a>
+  <nav class="tabs" aria-label="Main">
+    <a class="tab" href="#/" data-nav="post">Post</a>
+    <a class="tab" href="#/queue" data-nav="queue">Queue <span class="count" id="qcount" aria-label="posts waiting"></span></a>
+    <a class="tab" href="#/posted" data-nav="posted">Posted</a>
   </nav>
-  <div class="dots" id="dots"></div>
-  <a href="#/accounts" class="gear" data-nav="accounts" title="Accounts and settings">⚙</a>
+  <a class="tab acct-link" href="#/accounts" data-nav="accounts">
+    <span class="marks" id="marks"></span><span class="label">Accounts</span>
+  </a>
 </header>
-<main id="main"><p class="muted">Loading…</p></main>
-<div id="toast" role="status" aria-live="polite"></div>
+<main id="main" class="page" tabindex="-1"><p class="muted">Loading…</p></main>
+<div id="toasts" role="status" aria-live="polite"></div>
+<dialog class="modal" id="modal" aria-labelledby="modal-title"></dialog>
+<script src="/static/icons.js?v={{VERSION}}"></script>
 <script src="/static/app.js?v={{VERSION}}"></script>
 </body>
 </html>

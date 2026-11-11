@@ -1,4 +1,8 @@
-# PostKaro
+<p align="center">
+  <img src="https://res.cloudinary.com/amanupadhyay1211/image/upload/f_auto,q_auto,w_600/v1794369701/png_style_sticker_illustration_no_background_tr_ihlxsr.png" alt="PostKaro mascot: the ClipKaro bluebird as a postman in a yellow cap, with a yellow bag full of video cards, sending a film-strip paper plane past three check marks" width="260">
+</p>
+
+# PostKaro 📮
 
 Post your clips to **YouTube Shorts**, **Instagram Reels** and your **Facebook Page** from your own laptop.
 PostKaro is ClipKaro's partner: ClipKaro makes the clips, PostKaro posts them. It also works on its own
@@ -30,7 +34,7 @@ python3 run.py open
 log in. That keeps the page link working, and lets Instagram posts go out at their time.
 `--no-service` skips that.
 
-Then connect your accounts on the **⚙** page. The step-by-step guide is
+Then connect your accounts on the **Accounts** page. The step-by-step guide is
 **[docs/connect-accounts.md](docs/connect-accounts.md)**: about 30–45 minutes, once.
 
 ## Every day
@@ -49,7 +53,7 @@ On the page:
 |---|---|---|
 | YouTube | yes: uploaded at once as private, YouTube makes it public at the time | no |
 | Facebook Page | yes: uploaded at once, Facebook publishes it (10 minutes to 29 days ahead) | no |
-| Instagram | no: Instagram can't schedule | **yes**. PostKaro uploads up to a day before and publishes at the time. If the laptop was off, it asks you what to do (or posts at once, if you choose that on the ⚙ page). |
+| Instagram | no: Instagram can't schedule | **yes**. PostKaro uploads up to a day before and publishes at the time. If the laptop was off, it asks you what to do (or posts at once, if you choose that on the Accounts page). |
 
 ## Commands
 

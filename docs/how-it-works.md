@@ -62,7 +62,7 @@ at a time, so two big uploads never run together.
 password store through `keyring`.
 - Only a short key goes into the password store, because Windows can't hold big entries.
 - Every call to the password store has a 30-second limit, so a locked keyring can't freeze the app.
-- With no password store at all, the key goes into a user-only file, and the ⚙ page says so.
+- With no password store at all, the key goes into a user-only file, and the Accounts page says so.
 
 **YouTube:**
 - The user's own Google project and "Desktop app" client.
@@ -74,7 +74,7 @@ password store through `keyring`.
 - Meta's login page returns to `http://localhost:<port>/oauth/meta`.
 - After login: a long-lived user key (about 60 days) for Instagram, and a Page key (no end date) for
   Facebook.
-- `debug_token` gives the end dates, and the ⚙ page warns 7 days and 1 day before.
+- `debug_token` gives the end dates, and the Accounts page warns 7 days and 1 day before.
 
 **Health check:** every 6 hours, and with "Check now", each plug-in's `check()` asks the platform "who
 am I?".
@@ -115,3 +115,15 @@ am I?".
 - They need ffmpeg to make tiny test videos.
 
 The real platform calls can only be tested with real accounts (docs/connect-accounts.md, Part C).
+
+## The page's look
+- **One dark design system** in `web/style.css`: colour, type and size tokens at the top, then shared
+  pieces (buttons, fields, switches, badges, lists, dialogs, toasts), then the pages.
+- **Yellow (`--brand`)** marks only the main action on a page, the default account, a ticked platform
+  and keyboard focus.
+- **Green, amber and red** mean only connected/live, attention, and failed.
+- **Assets are kept in the repo**, so the page never loads anything from the internet:
+  - the Inter font: `web/fonts`, SIL Open Font License;
+  - the line icons: `web/icons.js`, a few icons from Lucide, ISC licence;
+  - the mascot: `web/img`. `logo.png` is the head cropped from the full sticker; `mascot.png` is the small
+    full sticker shown on empty pages.

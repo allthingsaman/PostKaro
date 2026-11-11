@@ -71,7 +71,7 @@ def cmd_status(a):
     print(f'Logins kept in: {v["where"]}' + (f'  ({v["problem"]})' if v['problem'] else ''))
     accs = db.accounts()
     if not accs:
-        print('No accounts connected yet: python run.py open, then the ⚙ page.')
+        print('No accounts connected yet: python run.py open, then the Accounts page.')
     for x in accs:
         mark = {'ok': 'ok', 'warn': '!', 'broken': 'X'}.get(x['status'], '?')
         print(f"  [{mark}] {settings.NAMES[x['platform']]:<9} {x['name']}{'' if x['active'] else ' (not in use)'}"

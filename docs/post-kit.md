@@ -42,7 +42,7 @@ ClipKaro writes it to `output/<project>/post.json` after editing. Then
 | Field | Meaning |
 |---|---|
 | `postkit` | Format version. PostKaro refuses a higher number than it knows and says to update. |
-| `source.channel` | Whose video the clips come from. If it isn't in "My channels" (⚙ page), PostKaro shows a copyright warning. |
+| `source.channel` | Whose video the clips come from. If it isn't in "My channels" (Accounts page), PostKaro shows a copyright warning. |
 | `source.url` | The full video, used for the "Full video: link" line in YouTube descriptions. |
 
 **Clip fields**

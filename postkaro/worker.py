@@ -73,7 +73,7 @@ def step(pid, now, s):
     st = p['state']
     try:
         if not acc:
-            raise PlatformError(f'{settings.NAMES[p["platform"]]} is not connected. Connect it on the ⚙ page, '
+            raise PlatformError(f'{settings.NAMES[p["platform"]]} is not connected. Connect it on the Accounts page, '
                                 f'then press Retry.')
         if st == 'scheduled':
             if when and plat.remote_schedule and plat.max_ahead and when - now > plat.max_ahead:
@@ -192,7 +192,7 @@ def problem(p, st, e, now):
         if acc:
             db.run("UPDATE accounts SET status='broken', problem=? WHERE platform=? AND account_id=?",
                    (str(e), acc['platform'], acc['account_id']))
-        return fail(p, f'{e} Reconnect on the ⚙ page, then press Retry.')
+        return fail(p, f'{e} Reconnect on the Accounts page, then press Retry.')
     n = int(p['attempts'] or 0)
     if e.retry and n < len(RETRY):
         back = {'uploading': 'scheduled', 'publishing': 'waiting'}.get(st, st)
@@ -230,7 +230,7 @@ def check_account(a, now=None):
     if not r.get('ok'):
         status, prob = 'broken', r.get('problem') or 'The login no longer works.'
         if a['status'] != 'broken':
-            notify.send(f'❌ {settings.NAMES[a["platform"]]} ({a["name"]}): {prob} Reconnect on the ⚙ page.',
+            notify.send(f'❌ {settings.NAMES[a["platform"]]} ({a["name"]}): {prob} Reconnect on the Accounts page.',
                         urgent=True)
     elif expires:
         left = db.parse(expires) - now
@@ -241,7 +241,7 @@ def check_account(a, now=None):
                 if extra.get('warned') != d:
                     extra['warned'] = d
                     notify.send(f'⚠ {settings.NAMES[a["platform"]]} login ends in {max(0, left.days)} day(s). '
-                                f'Reconnect on the ⚙ page.')
+                                f'Reconnect on the Accounts page.')
     db.run('UPDATE accounts SET checked=?, status=?, problem=?, expires=?, extra=?, name=COALESCE(?, name) '
            'WHERE platform=? AND account_id=?',
            (db.iso(now), status, prob, expires, json.dumps(extra), r.get('name'), a['platform'], a['account_id']))

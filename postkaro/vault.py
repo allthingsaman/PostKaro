@@ -6,7 +6,7 @@ the `keyring` library. A short key there avoids the Windows size limit (about 12
 is useless without it.
 
 No password store on this computer (rare: some minimal Linux setups): the key goes into a file only your
-user can read (config folder: logins.key), and the ⚙ page says so.
+user can read (config folder: logins.key), and the Accounts page says so.
 
 Nothing in here is ever printed, logged, sent to Claude or to any server. POSTKARO_VAULT=file forces the
 key file (used by the tests).
@@ -155,7 +155,7 @@ def delete(name):
 
 
 def status():
-    """For the ⚙ page: where logins are kept, and any problem."""
+    """For the Accounts page: where logins are kept, and any problem."""
     try:
         _master()
         return {'ok': _problem is None, 'where': _where, 'problem': _problem}

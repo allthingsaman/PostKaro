@@ -11,7 +11,7 @@ PostKaro: you log in on Google's and Meta's own pages.
 > the words in **bold**. These steps were checked in November 2026.
 
 **Before you start**
-- Install PostKaro and open it: `python3 run.py open` (Windows: `python run.py open`), then click **⚙**.
+- Install PostKaro and open it: `python3 run.py open` (Windows: `python run.py open`), then click **Accounts** (top right).
 - Have these ready:
   - the Google account that owns your YouTube channel;
   - the Facebook account that manages your Facebook Page;
@@ -71,7 +71,7 @@ Page**. Both are free switches.
 7. **Make the login key.** **Clients** → **Create client** → Application type **Desktop app** → name
    `PostKaro` → **Create**.
    - In the box that opens, click **Download JSON** right away. Google shows the secret **only once**.
-8. **Give it to PostKaro.** PostKaro **⚙** → YouTube → **Choose File** → pick the downloaded
+8. **Give it to PostKaro.** PostKaro **Accounts** → YouTube → **Choose File** → pick the downloaded
    `client_secret_….json` → **Save**.
 9. **Connect.** Click **Connect YouTube**. On Google's page:
    - Pick the account that owns your channel.
@@ -100,7 +100,7 @@ Page**. Both are free switches.
    **Set up**.
    - Then **Facebook Login for Business** → **Settings** → **Valid OAuth Redirect URIs** → paste exactly
      `http://localhost:8765/oauth/meta` → **Save changes**.
-   - PostKaro's ⚙ page shows this address too, in case you changed the port.
+   - PostKaro's Accounts page shows this address too, in case you changed the port.
    - If Meta refuses an `http` address there, skip this step: `localhost` is allowed by itself while the
      app is in Development mode.
 4. **Add Instagram.** **Add product** → **Instagram** → **API setup with Facebook login** → **Set up**.
@@ -109,7 +109,7 @@ Page**. Both are free switches.
    - click **Show** next to **App Secret** (enter your Facebook password) and copy it.
 6. **Leave the app in Development mode.** Don't switch it to Live. As the app's admin you can use every
    permission for your own Page and Instagram without any review.
-7. **Give it to PostKaro.** PostKaro **⚙** → Instagram and Facebook Page → paste the **App ID** and **App
+7. **Give it to PostKaro.** PostKaro **Accounts** → Instagram and Facebook → paste the **App ID** and **App
    Secret** → **Save**.
 8. **Connect.** Click **Connect Facebook and Instagram**. On Meta's page:
    - **Continue** as you.
@@ -122,10 +122,10 @@ Page**. Both are free switches.
 ## Part C. Check it works
 
 1. Run `python3 run.py status`. Every account should show `[ok]`.
-2. **Add your channel names** under **My channels** on the ⚙ page, so your own videos don't get the "not
+2. **Add your channel names** under **My channels** on the Accounts page, so your own videos don't get the "not
    your video" warning. Use the exact names, for example the channel name ClipKaro shows for your videos.
 3. **A quiet first test on YouTube:**
-   - On the ⚙ page set **YouTube visibility** to **unlisted**, and save.
+   - On the Accounts page set **YouTube visibility** to **unlisted**, and save.
    - Open a clip on the **Post** page, untick Instagram and Facebook, and leave **When** empty.
    - Press **Schedule all**.
    - Within a minute or two, **Posted** shows the link.
@@ -146,11 +146,11 @@ Page**. Both are free switches.
 | "URL blocked" or "redirect URI is not whitelisted" (Meta) | Add `http://localhost:8765/oauth/meta` to **Valid OAuth Redirect URIs** (Part B, step 3), and check the app is in **Development** mode. |
 | "Instagram: none found" after connecting | Instagram isn't a Creator/Business account, or isn't linked to the Page (Part 0). Fix that, then **Reconnect**. |
 | "A permission is missing" | Click **Reconnect** and, on Meta's page, allow everything and pick your Page and Instagram. |
-| A yellow dot: "login ends on …" | Instagram's login lasts about 60 days, and Meta asks for a fresh login every 90 days. Click **Reconnect** on the ⚙ page; it takes a minute. PostKaro warns you 7 days and 1 day before. |
+| A yellow dot: "login ends on …" | Instagram's login lasts about 60 days, and Meta asks for a fresh login every 90 days. Click **Reconnect** on the Accounts page; it takes a minute. PostKaro warns you 7 days and 1 day before. |
 | "today's YouTube allowance" is used up | Your Google project can upload 100 videos a day. It resets at midnight US Pacific time. |
 
 **Where things are kept**
 - **Your logins:** an encrypted file in PostKaro's data folder. Its key is in your computer's password
   store (GNOME Keyring on Linux, Keychain on macOS, Credential Manager on Windows).
 - **Your app secrets:** inside that same encrypted file.
-- **Disconnect** on the ⚙ page deletes a login and asks Google or Meta to cancel PostKaro's access.
+- **Disconnect** on the Accounts page deletes a login and asks Google or Meta to cancel PostKaro's access.

@@ -28,7 +28,7 @@ TIMEOUT = (30, 900)
 def _app():
     app = vault.get('app:meta')
     if not app:
-        raise PlatformError('Save your Meta app first (⚙ page, Instagram and Facebook).')
+        raise PlatformError('Save your Meta app first (Accounts page, Instagram and Facebook).')
     return app
 
 

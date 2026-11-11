@@ -1,4 +1,4 @@
-"""The user's posting defaults. Saved in the data folder as settings.json and changed on the ⚙ page."""
+"""The user's posting defaults. Saved in the data folder as settings.json and changed on the Accounts page."""
 import json
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo

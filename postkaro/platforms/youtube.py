@@ -24,7 +24,7 @@ CHUNK = 8 * 1024 * 1024
 def _client_config():
     app = vault.get('app:google')
     if not app:
-        raise PlatformError('Save your Google app first (⚙ page, YouTube).')
+        raise PlatformError('Save your Google app first (Accounts page, YouTube).')
     return {'installed': {'client_id': app['client_id'], 'client_secret': app['client_secret'],
                           'auth_uri': 'https://accounts.google.com/o/oauth2/auth', 'token_uri': TOKEN_URI,
                           'redirect_uris': ['http://127.0.0.1', 'http://localhost']}}
