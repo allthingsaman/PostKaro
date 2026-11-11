@@ -47,12 +47,24 @@ Page**. Both are free switches.
    - Tick that you agree → **Continue** → **Create**
 5. **Add the YouTube permission.** **Data Access** → **Add or remove scopes** → find
    `.../auth/youtube` ("Manage your YouTube account") → tick it → **Update** → **Save**.
-6. **Fill in Branding, then publish.** "Publish app" stays grey until the **Branding** page is complete.
-   - On **Branding**, pick your **User support email** and type your email under **Developer contact
-     information** (at the bottom). Click **Save**.
+6. **Fill in Branding, then publish.** "Publish app" stays grey until the **Branding** page has an app
+   name, a support email, **a homepage link and a privacy policy link**. PostKaro's own website (its
+   GitHub Pages) has both pages.
+   - On **Branding**:
+     - **User support email:** pick yours.
+     - **Application home page:** `https://<github-user>.github.io/PostKaro/`
+     - **Application privacy policy link:** `https://<github-user>.github.io/PostKaro/privacy.html`
+     - **Authorized domains:** `<github-user>.github.io`
+     - **Developer contact information** (at the bottom): your email.
+     - Click **Save**.
+
+     Use the GitHub account that hosts PostKaro's website. Making the website yourself is in the
+     README, under "Your own website".
    - **Don't upload a logo.** A logo means Google must verify the app first.
-   - Leave **App domain** (home page, privacy policy, terms) and **Authorized domains** empty.
    - Then **Audience** → **Publish app** → **Confirm**. The status must say **In production**.
+   - **Can't do this now?** Stay in **Testing**. On **Audience** → **Test users** → **Add users**, add
+     the Gmail address that owns your channel. Everything works, but Google logs PostKaro out every 7
+     days until you publish. After publishing, press **Reconnect** once.
    - Important: in "Testing", Google logs PostKaro out **every 7 days**.
    - If Google says the app needs verification, you can ignore it. That is only for apps used by
      strangers, and this one is just for you.

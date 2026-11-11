@@ -69,6 +69,16 @@ python3 run.py serve                       run it in this terminal (to see error
 | Instagram | At most 5 hashtags. Caption up to 2,200 characters. About 100 posts a day. The login lasts about 60 days, and PostKaro reminds you to reconnect. |
 | Facebook | Pages only, not personal profiles. Reels must be 3–90 seconds. 30 Reels a day. |
 
+## Your own website (needed once, for Google's login screen)
+Google only lets your own Google app leave "Testing" when it has a homepage and a privacy policy
+link. The `docs/` folder has both pages (`index.md`, `privacy.md`). Publish them for free with GitHub
+Pages:
+1. Put this repo on GitHub under your account (public).
+2. Repo → **Settings** → **Pages** → **Source: Deploy from a branch**, branch **main**, folder **/docs**
+   → **Save**.
+3. A minute later the site is at `https://<github-user>.github.io/PostKaro/`. The privacy policy is
+   at `…/PostKaro/privacy.html`.
+
 ## More
 
 - [docs/connect-accounts.md](docs/connect-accounts.md): connecting YouTube, Instagram and Facebook
