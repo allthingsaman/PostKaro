@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="pk-key" content="{{KEY}}">
+<title>PostKaro</title>
+<link rel="stylesheet" href="/static/style.css?v={{VERSION}}">
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="#/">Post<b>Karo</b></a>
+  <nav>
+    <a href="#/" data-nav="post">Post</a>
+    <a href="#/queue" data-nav="queue">Queue <span class="count" id="qcount"></span></a>
+    <a href="#/posted" data-nav="posted">Posted</a>
+  </nav>
+  <div class="dots" id="dots"></div>
+  <a href="#/accounts" class="gear" data-nav="accounts" title="Accounts and settings">⚙</a>
+</header>
+<main id="main"><p class="muted">Loading…</p></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="/static/app.js?v={{VERSION}}"></script>
+</body>
+</html>

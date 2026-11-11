@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+# nothing personal ever goes in the repo: logins, the queue and settings live in your data folder
+*.db
+*.enc
+logins.key
+app.json

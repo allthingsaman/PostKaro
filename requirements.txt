@@ -1,0 +1,12 @@
+# PostKaro's Python packages (install.py puts them in .venv). Python 3.11 or newer.
+starlette>=0.49.1          # the local web page (0.49.1+ fixes CVE-2025-62727)
+uvicorn>=0.30              # runs it (plain install, no [standard] extras)
+requests>=2.32             # talks to Meta
+keyring>=25.0              # the computer's password store
+cryptography>=44.0         # encrypts the saved logins
+google-auth>=2.40          # YouTube login
+google-auth-oauthlib>=1.2
+google-auth-httplib2>=0.2
+google-api-python-client>=2.170
+httpx>=0.27                # only for the tests (Starlette's test client)
+tzdata; sys_platform == "win32"   # time zones on Windows
