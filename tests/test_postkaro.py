@@ -16,7 +16,7 @@ HOME = tempfile.mkdtemp(prefix='postkaro-test-')
 os.environ.update(POSTKARO_HOME=HOME, POSTKARO_VAULT='file', POSTKARO_NO_NOTIFY='1')
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from postkaro import db, kit, paths, planner, rules, settings, vault, worker  # noqa: E402
+from postkaro import covers, db, kit, paths, planner, rules, settings, vault, worker  # noqa: E402
 from postkaro import platforms  # noqa: E402
 from postkaro.platforms.base import Platform, PlatformError  # noqa: E402
 
@@ -94,6 +94,17 @@ class Fake(Platform):
 
     def cancel(self, post, account):
         self.calls.append(('cancel', post['id']))
+
+    cover_result = 'ok'
+
+    def apply_cover(self, post, account):
+        c = post['clip']
+        if not c.get('cover') or post['remote'].get('cover_v') == c.get('cover_v'):
+            return None
+        self.calls.append(('cover', post['id'], c['cover_v']))
+        if self.cover_result == 'boom':
+            raise RuntimeError('thumbnail bug')
+        return {'cover_v': c['cover_v'], 'note': None if self.cover_result == 'ok' else self.cover_result}
 
 
 class Base(unittest.TestCase):
@@ -435,6 +446,119 @@ class TestServer(Base):
         self.assertEqual(vault.get('app:google')['client_id'], 'a')
         self.assertTrue(self.c.get('/api/state').json()['apps']['google'])
         self.assertNotIn('"b"', self.c.get('/api/state').text)    # secrets never go to the page
+
+
+def make_png(path):
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=red:s=90x160', '-frames:v', '1', str(path)],
+                   check=True)
+
+
+@unittest.skipUnless(HAS_FFMPEG, 'needs ffmpeg')
+class TestCovers(Base):
+    def setUp(self):
+        super().setUp()
+        self.bid = kit.import_kit(clipkaro_project(self.tmp))
+        self.cid = db.one('SELECT id FROM clips WHERE no=1')['id']
+
+    def clip(self):
+        return db.one('SELECT * FROM clips WHERE id=?', (self.cid,))
+
+    def test_frame_and_image(self):
+        covers.from_frame(self.cid, 2.5)
+        c = self.clip()
+        self.assertEqual((c['cover_kind'], c['cover_ms']), ('frame', 2500))
+        self.assertTrue(Path(c['cover']).exists())
+        self.assertIn('YouTube, Instagram and Facebook', covers.describe(c))
+        old = c['cover']
+        png = Path(self.tmp) / 'cover.png'
+        make_png(png)
+        covers.from_image(self.cid, png.read_bytes())
+        c = self.clip()
+        self.assertEqual((c['cover_kind'], c['cover_ms']), ('image', None))
+        self.assertFalse(Path(old).exists())                       # the old file is gone
+        self.assertTrue(Path(c['cover']).read_bytes().startswith(b'\xff\xd8\xff'))   # stored as JPEG
+        self.assertIn('Instagram can only use a frame', covers.describe(c))
+        with self.assertRaises(covers.CoverError):
+            covers.from_image(self.cid, b'not an image at all')
+        covers.remove(self.cid)
+        self.assertIsNone(self.clip()['cover'])
+
+    def test_worker_sets_cover_once_and_again_after_a_change(self):
+        self.connect_all()
+        now = datetime(2026, 11, 11, 10, 0, tzinfo=UTC)
+        covers.from_frame(self.cid, 1)
+        pid = db.one("SELECT id FROM posts WHERE clip_id=? AND platform='youtube'", (self.cid,))['id']
+        db.update_post(pid, state='scheduled', when_utc=db.iso(now + timedelta(hours=5)))
+        yt = self.fakes['youtube']
+        for t in (now, now + timedelta(minutes=1), now + timedelta(minutes=2)):
+            yt.now = t
+            worker.tick(t)
+        self.assertEqual(db.post(pid)['state'], 'waiting')
+        self.assertEqual(sum(1 for c in yt.calls if c[0] == 'cover'), 1)  # set once, not every round
+        covers.from_frame(self.cid, 3)                                    # changed before it went live
+        yt.now = now + timedelta(minutes=3)
+        worker.tick(yt.now)
+        self.assertEqual(sum(1 for c in yt.calls if c[0] == 'cover'), 2)
+
+    def test_cover_problem_is_a_note_never_a_failure(self):
+        self.connect_all()
+        now = datetime(2026, 11, 11, 10, 0, tzinfo=UTC)
+        covers.from_frame(self.cid, 1)
+        pid = db.one("SELECT id FROM posts WHERE clip_id=? AND platform='facebook'", (self.cid,))['id']
+        db.update_post(pid, state='scheduled', when_utc=None)
+        fb = self.fakes['facebook']
+        fb.cover_result = 'boom'
+        for t in (now, now + timedelta(seconds=20)):
+            fb.now = t
+            worker.tick(t)
+        p = db.post(pid)
+        self.assertEqual(p['state'], 'live')
+        self.assertIn('thumbnail bug', p['note'])
+
+    def test_instagram_gets_the_frame(self):
+        from postkaro.platforms import meta
+        sent = {}
+        saved = (meta._call, meta._user, meta._rupload)
+        meta._call = lambda method, url, **kw: sent.update(kw.get('data') or {}) or {'id': 'C1', 'uri': 'https://x'}
+        meta._user = lambda account: {'token': 't'}
+        meta._rupload = lambda *a: {'success': True}
+        try:
+            post = {'body': 'cap', 'clip': {'file': 'x.mp4', 'cover_kind': 'frame', 'cover_ms': 2500}}
+            r = meta.Instagram().upload(post, {'account_id': 'IG1'}, lambda f: None)
+            self.assertEqual(sent.get('thumb_offset'), '2500')
+            self.assertIsNone(r['note'])
+            sent.clear()
+            post['clip'] = {'file': 'x.mp4', 'cover_kind': 'image', 'cover_ms': None}
+            r = meta.Instagram().upload(post, {'account_id': 'IG1'}, lambda f: None)
+            self.assertNotIn('thumb_offset', sent)
+            self.assertIn('only use a frame', r['note'])
+        finally:
+            meta._call, meta._user, meta._rupload = saved
+
+    def test_server_cover_actions(self):
+        from starlette.testclient import TestClient
+        from postkaro import server
+        key, port = paths.app_info()['key'], paths.app_info()['port']
+        c = TestClient(server.make_app(), base_url=f'http://127.0.0.1:{port}')
+        c.cookies.set('pk', key)
+        h = {'X-PostKaro': key}
+        r = c.post(f'/api/clip/{self.cid}/cover-frame', json={'t': 1.2}, headers=h)
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertTrue(r.json()['thumb'].startswith(f'/media/cover/{self.cid}?v='))
+        self.assertEqual(c.get(r.json()['thumb']).headers['content-type'], 'image/jpeg')
+        png = Path(self.tmp) / 'cover.png'
+        make_png(png)
+        r = c.put(f'/api/clip/{self.cid}/cover', content=png.read_bytes(), headers={**h, 'Content-Type': 'image/png'})
+        self.assertEqual((r.status_code, r.json()['cover_kind']), (200, 'image'))
+        r = c.put(f'/api/clip/{self.cid}/cover', content=b'hello', headers=h)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(c.put(f'/api/clip/{self.cid}/cover', content=png.read_bytes()).status_code, 401)   # no key header
+        # an Instagram upload waiting for its time goes again with the new cover
+        ig = db.one("SELECT id FROM posts WHERE clip_id=? AND platform='instagram'", (self.cid,))['id']
+        db.update_post(ig, state='waiting', remote_id='C1', remote={'id': 'C1'})
+        r = c.delete(f'/api/clip/{self.cid}/cover', headers=h)
+        self.assertEqual((r.status_code, r.json()['cover']), (200, None))
+        self.assertEqual((db.post(ig)['state'], db.post(ig)['remote_id']), ('scheduled', None))
 
 
 class TestVault(unittest.TestCase):

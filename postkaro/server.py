@@ -20,7 +20,7 @@ from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Redire
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
-from . import __version__, db, kit, paths, planner, rules, settings, vault, worker
+from . import __version__, covers, db, kit, paths, planner, rules, settings, vault, worker
 from .platforms import get as platform
 from .platforms.base import PlatformError
 
@@ -74,7 +74,7 @@ def api(fn):
             out = await run_in_threadpool(fn, request, body)
         except ApiError as e:
             return JSONResponse({'error': str(e)}, e.status)
-        except (ValueError, vault.VaultError) as e:
+        except (ValueError, vault.VaultError, covers.CoverError) as e:
             return JSONResponse({'error': str(e)}, 400)
         except PlatformError as e:
             return JSONResponse({'error': str(e)}, 502)
@@ -101,7 +101,7 @@ def post_view(p, clip, s):
     errors, warnings = rules.check(p['platform'], p['title'], p['body'], clip)
     return {'id': p['id'], 'platform': p['platform'], 'enabled': bool(p['enabled']), 'title': p['title'],
             'body': p['body'], 'when': settings.to_local(when, s) if when else '', 'state': p['state'],
-            'url': p['url'], 'error': p['error'], 'errors': errors, 'warnings': warnings,
+            'url': p['url'], 'error': p['error'], 'note': p.get('note'), 'errors': errors, 'warnings': warnings,
             'progress': worker.progress.get(p['id']), 'attempts': p['attempts'],
             'hashtags': len(rules.hashtags(p['body'])), 'chars': len(p['body'] or ''),
             'title_chars': len(p['title'] or ''), 'desc_bytes': len((p['body'] or '').encode('utf-8'))}
@@ -113,7 +113,13 @@ def clip_view(c):
         warn.append(f"Honesty note: {c['note']}")
     return {'id': c['id'], 'no': c['no'], 'title': c['title'], 'duration': c['duration'], 'score': c['score'],
             'deep': bool(c['deep']), 'removed': bool(c['removed']), 'warnings': warn,
-            'exists': Path(c['file']).exists(), 'media': f"/media/clip/{c['id']}", 'thumb': f"/media/thumb/{c['id']}"}
+            'exists': Path(c['file']).exists(), 'media': f"/media/clip/{c['id']}",
+            'thumb': cover_url(c) or f"/media/thumb/{c['id']}", 'cover': cover_url(c),
+            'cover_kind': c.get('cover_kind'), 'cover_ms': c.get('cover_ms'), 'cover_text': covers.describe(c)}
+
+
+def cover_url(c):
+    return f"/media/cover/{c['id']}?v={c['cover_v']}" if c.get('cover') and Path(c['cover']).exists() else None
 
 
 def batch_view(bid):
@@ -219,6 +225,58 @@ def remove_clip(request, body):
             cancel_post(p['id'])
     db.run('UPDATE clips SET removed=? WHERE id=?', (0 if restore else 1, cid))
     return {'ok': True}
+
+
+def after_cover_change(cid):
+    """Instagram takes its cover frame only with the upload: uploads waiting for their time go again.
+    YouTube and Facebook get the new thumbnail by themselves (worker.touch_cover)."""
+    for r in db.rows("SELECT id FROM posts WHERE clip_id=? AND platform='instagram' AND state IN ('processing', 'waiting')",
+                     (cid,)):
+        lk = with_lock(r['id'])
+        try:
+            db.update_post(r['id'], state='scheduled', remote_id=None, remote={}, prepared_at=None)
+            db.log(r['id'], 'thumbnail changed: uploading again')
+        finally:
+            lk.release()
+    poke()
+    c = db.one('SELECT * FROM clips WHERE id=?', (cid,))
+    return clip_view(c)
+
+
+def cover_frame(request, body):
+    cid = int(request.path_params['id'])
+    covers.from_frame(cid, float(body.get('t') or 0))
+    return after_cover_change(cid)
+
+
+def cover_remove(request, body):
+    cid = int(request.path_params['id'])
+    covers.remove(cid)
+    return after_cover_change(cid)
+
+
+async def cover_upload(request: Request):
+    """PUT the image file itself (the page sends the chosen file as the request body)."""
+    if not host_ok(request):
+        return JSONResponse({'error': 'wrong host'}, 403)
+    if not authed(request, write=True):
+        return JSONResponse({'error': 'Open PostKaro with its link (python run.py open).'}, 401)
+    data = await request.body()
+    cid = int(request.path_params['id'])
+    try:
+        await run_in_threadpool(covers.from_image, cid, data)
+        return JSONResponse(await run_in_threadpool(after_cover_change, cid))
+    except covers.CoverError as e:
+        return JSONResponse({'error': str(e)}, 400)
+
+
+async def cover_file(request: Request):
+    if not host_ok(request) or not authed(request):
+        return Response('no', 403)
+    c = db.one('SELECT cover FROM clips WHERE id=?', (int(request.path_params['id']),))
+    if not c or not c['cover'] or not Path(c['cover']).exists():
+        return Response('not found', 404)
+    return FileResponse(c['cover'], media_type='image/jpeg', headers={'Cache-Control': 'max-age=31536000'})
 
 
 def plan(request, body):
@@ -538,6 +596,10 @@ def routes():
     R = Route
     return [
         R('/', index), R('/health', health), R('/media/clip/{id:int}', media), R('/media/thumb/{id:int}', thumb),
+        R('/media/cover/{id:int}', cover_file),
+        R('/api/clip/{id:int}/cover-frame', api(cover_frame), methods=['POST']),
+        R('/api/clip/{id:int}/cover', cover_upload, methods=['PUT']),
+        R('/api/clip/{id:int}/cover', api(cover_remove), methods=['DELETE']),
         R('/oauth/{name}', oauth_callback),
         R('/api/state', api(state)), R('/api/batches', api(batches)),
         R('/api/batch/{id:int}', api(batch)), R('/api/import', api(import_), methods=['POST']),

@@ -59,6 +59,11 @@ def parse(s):
     return datetime.fromisoformat(s.replace('Z', '+00:00')).astimezone(timezone.utc)
 
 
+# columns added later (v0.3): the clip's custom thumbnail, and a post's non-blocking note
+ADDED = {
+    'clips': [('cover', 'TEXT'), ('cover_kind', 'TEXT'), ('cover_ms', 'INTEGER'), ('cover_v', 'INTEGER')],
+    'posts': [('note', 'TEXT')],
+}
 _ready = set()
 
 
@@ -71,6 +76,12 @@ def connect():
     if fresh:
         con.execute('PRAGMA journal_mode=WAL')
         con.executescript(SCHEMA)
+        for table, cols in ADDED.items():               # columns added after a release: add them to old files
+            have = {r[1] for r in con.execute(f'PRAGMA table_info({table})')}
+            for name, kind in cols:
+                if name not in have:
+                    con.execute(f'ALTER TABLE {table} ADD COLUMN {name} {kind}')
+        con.commit()
         _ready.add(str(path))
     return con
 

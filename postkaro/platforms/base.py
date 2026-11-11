@@ -48,3 +48,9 @@ class Platform:
     def cancel(self, post, account):
         """Remove an uploaded post that isn't live yet (or the waiting upload)."""
         return None
+
+    def apply_cover(self, post, account):
+        """Set the clip's custom thumbnail on the uploaded video, if this platform can and it isn't set yet.
+        -> None (nothing to do) or a dict merged into post['remote']: {'cover_v': version, 'note': text or None}.
+        Never stops a post: the worker turns problems into a note."""
+        return None

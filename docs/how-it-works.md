@@ -56,6 +56,18 @@ at a time, so two big uploads never run together.
 - YouTube changes it in place (`videos.update`).
 - Instagram and Facebook remove it and upload it again (`update()` returns False).
 
+## Custom thumbnails (`covers.py`)
+- **One per clip.** A frame (ffmpeg grabs it at the chosen second) or an uploaded JPG/PNG/WebP (turned into
+  a JPEG, longest side at most 1920 px). Kept in the data folder (`covers/`), with a version number.
+- **YouTube:** `thumbnails.set` once the video has finished processing (Shorts too); 50 quota units.
+  The channel must have custom thumbnails switched on (a phone-verified channel).
+- **Facebook:** `POST /{video-id}/thumbnails` with `is_preferred=true`. It needs the
+  `pages_manage_engagement` and `pages_read_user_content` permissions (added in 0.3: press Reconnect once).
+- **Instagram:** only a frame, sent as `thumb_offset` with the upload. Changing the thumbnail of an upload
+  that is waiting for its time makes it upload again.
+- `worker.touch_cover` sets it when the video is ready, and again if the thumbnail changes before the post
+  goes live. A problem never stops a post: it becomes a note on the post (shown in amber).
+
 ## Logins
 
 **Where they are kept** (`vault.py`): one Fernet-encrypted file in the data folder. Its key sits in the OS

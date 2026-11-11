@@ -298,7 +298,7 @@ async function batchPage(id) {
 function clipHTML(c) {
   return `<section class="clip" data-clip="${c.id}">
     <div class="clip-video">${c.exists
-      ? `<video src="${c.media}" poster="${c.thumb}" controls preload="none" playsinline aria-label="Clip ${c.no}"></video>`
+      ? `<video src="${c.media}" poster="${c.thumb}" controls preload="none" playsinline aria-label="Clip ${c.no}"></video>${coverHTML(c)}`
       : '<div class="gone">Video file not found</div>'}</div>
     <div style="min-width:0">
       <div class="clip-head"><div class="grow">
@@ -311,6 +311,33 @@ function clipHTML(c) {
       <div class="panel">${PLATS.map(p => c.posts[p] ? postHTML(c.posts[p]) : '').join('')}</div>
     </div>
   </section>`;
+}
+
+function coverHTML(c) {
+  const kind = c.cover ? (c.cover_kind === 'frame' ? 'Frame' : 'Image') : 'Automatic';
+  return `<div class="cover" data-cover="${c.id}">
+    <div class="cover-head"><span>Thumbnail</span><span class="faint">${kind}</span></div>
+    <button class="btn btn-sm" data-cover-frame="${c.id}" title="Pause the video on the frame you want, then press this">${icon('scan-eye', 14)}Use this frame</button>
+    <label class="btn btn-sm">${icon('image', 14)}Upload image<input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp"
+      data-cover-file="${c.id}" aria-label="Upload a thumbnail image for clip ${c.no}"></label>
+    ${c.cover ? `<button class="btn btn-ghost btn-sm btn-danger" data-cover-remove="${c.id}">${icon('x', 14)}Remove</button>` : ''}
+    <p class="cover-text">${esc(c.cover_text)}</p>
+  </div>`;
+}
+function showCover(clipEl, cv) {
+  const v = $('video', clipEl);
+  if (v) v.poster = cv.thumb;
+  const box = $('.cover', clipEl);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = coverHTML(cv);
+  box.replaceWith(tmp.firstElementChild);
+}
+async function uploadCover(cid, file) {
+  const r = await fetch(`/api/clip/${cid}/cover`, {method: 'PUT', body: file,
+                                                   headers: {'X-PostKaro': KEY, 'Content-Type': file.type || 'application/octet-stream'}});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `${r.status} ${r.statusText}`);
+  return j;
 }
 
 function counterText(p) {
@@ -357,7 +384,8 @@ function postHTML(p) {
 function msgsHTML(p) {
   return p.errors.map(e => `<li class="err">${icon('circle-alert', 14)}<span>${esc(e)}</span></li>`).join('') +
     p.warnings.map(w => `<li class="warn">${icon('triangle-alert', 14)}<span>${esc(w)}</span></li>`).join('') +
-    (p.error && p.state !== 'live' ? `<li class="err">${icon('circle-x', 14)}<span>${esc(p.error)}</span></li>` : '');
+    (p.error && p.state !== 'live' ? `<li class="err">${icon('circle-x', 14)}<span>${esc(p.error)}</span></li>` : '') +
+    (p.note ? `<li class="warn">${icon('info', 14)}<span>${esc(p.note)}</span></li>` : '');
 }
 
 function wireBatch(bid) {
@@ -381,7 +409,14 @@ function wireBatch(bid) {
     const k = row.dataset.post + f;
     (savers[k] ||= debounce(save, 700))(row, f, e.target.value);
   });
-  clips.addEventListener('change', e => {
+  clips.addEventListener('change', async e => {
+    if (e.target.dataset.coverFile) {
+      const file = e.target.files[0], clipEl = e.target.closest('.clip');
+      if (!file) return;
+      try { showCover(clipEl, await uploadCover(e.target.dataset.coverFile, file)); toast('Thumbnail saved.', 'ok'); }
+      catch (err) { toast(err.message, 'bad'); }
+      return;
+    }
     const f = e.target.dataset.f, row = e.target.closest('.plat');
     if (!row) return;
     if (f === 'enabled') { row.classList.toggle('off', !e.target.checked); updateSchedLabel(); save(row, 'enabled', e.target.checked); }
@@ -390,6 +425,23 @@ function wireBatch(bid) {
   clips.addEventListener('click', async e => {
     const act = e.target.closest('[data-act]');
     if (act && await postAct(act.dataset.id, act.dataset.act, act)) batchPage(bid);
+    const fr = e.target.closest('[data-cover-frame]');
+    if (fr) {
+      const clipEl = fr.closest('.clip'), v = $('video', clipEl);
+      const t = v ? v.currentTime : 0;
+      try {
+        const cv = await busy(fr, () => api(`/clip/${fr.dataset.coverFrame}/cover-frame`, 'POST', {t}));
+        showCover(clipEl, cv);
+        toast(`Thumbnail set to the frame at ${fmtDur(t)}.`, 'ok');
+      } catch (err) { toast(err.message, 'bad'); }
+      return;
+    }
+    const cr = e.target.closest('[data-cover-remove]');
+    if (cr) {
+      try { showCover(cr.closest('.clip'), await busy(cr, () => api(`/clip/${cr.dataset.coverRemove}/cover`, 'DELETE'))); toast('Back to the automatic thumbnail.', 'ok'); }
+      catch (err) { toast(err.message, 'bad'); }
+      return;
+    }
     const rm = e.target.closest('[data-remove]');
     if (rm) {
       if (!await confirmDialog({title: 'Remove this clip?', ok: 'Remove', danger: true,

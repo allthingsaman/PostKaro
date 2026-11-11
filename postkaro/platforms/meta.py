@@ -21,7 +21,8 @@ VERSION = 'v27.0'
 GRAPH = f'https://graph.facebook.com/{VERSION}'
 DIALOG = f'https://www.facebook.com/{VERSION}/dialog/oauth'
 SCOPES = ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'business_management',
-          'instagram_basic', 'instagram_content_publish']
+          'instagram_basic', 'instagram_content_publish',
+          'pages_manage_engagement', 'pages_read_user_content']        # the last two: Facebook custom thumbnails
 TIMEOUT = (30, 900)
 
 
@@ -255,12 +256,17 @@ class Instagram(Platform):
 
     def upload(self, post, account, progress):
         token = _user(account)['token']
-        c = _call('POST', f"/{account['account_id']}/media", data={
-            'media_type': 'REELS', 'upload_type': 'resumable', 'caption': post['body'] or '',
-            'access_token': token})
+        clip = post['clip']
+        data = {'media_type': 'REELS', 'upload_type': 'resumable', 'caption': post['body'] or '', 'access_token': token}
+        note = None
+        if clip.get('cover_kind') == 'frame' and clip.get('cover_ms') is not None:
+            data['thumb_offset'] = str(int(clip['cover_ms']))          # the chosen frame becomes the cover
+        elif clip.get('cover_kind') == 'image':
+            note = 'Instagram can only use a frame from the video as its cover, so it picked its own.'
+        c = _call('POST', f"/{account['account_id']}/media", data=data)
         uri = c.get('uri') or f"https://rupload.facebook.com/ig-api-upload/{VERSION}/{c['id']}"
-        _rupload(uri, token, post['clip']['file'], progress)
-        return {'id': c['id']}
+        _rupload(uri, token, clip['file'], progress)
+        return {'id': c['id'], 'note': note}
 
     def poll(self, post, account):
         token = _user(account)['token']
@@ -361,3 +367,20 @@ class Facebook(Platform):
 
     def publish(self, post, account):
         raise PlatformError('Facebook publishes by itself.')
+
+    def apply_cover(self, post, account):
+        """The clip's custom thumbnail, as the reel's preferred thumbnail."""
+        from pathlib import Path
+        c = post['clip']
+        if not c.get('cover') or post['remote'].get('cover_v') == c.get('cover_v') or not Path(c['cover']).exists():
+            return None
+        try:
+            with open(c['cover'], 'rb') as f:
+                _call('POST', f"/{post['remote_id']}/thumbnails", data={'is_preferred': 'true',
+                      'access_token': _page_token(account)}, files={'source': ('cover.jpg', f, 'image/jpeg')})
+        except PlatformError as e:
+            if e.retry:
+                raise
+            return {'cover_v': c['cover_v'], 'note': f'Custom thumbnail not set on Facebook ({e}). If a permission '
+                                                     'is missing, press Reconnect on the Accounts page.'}
+        return {'cover_v': c['cover_v'], 'note': None}

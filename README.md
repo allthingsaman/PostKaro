@@ -12,6 +12,8 @@ with any ClipKaro project folder.
   anything, remove clips you don't want, press **Schedule**.
 - **Each platform at its own time.** "Plan for me" spreads the clips over the coming days at your usual
   times, best clips first.
+- **Custom thumbnails.** Pick a frame from the clip, or upload an image. YouTube and Facebook take either;
+  Instagram takes a frame from the video (an uploaded image would need a public web link).
 - **Checks every post.** Each post ends up as a live link, or a plain error with a **Retry** button. A
   desktop notification tells you either way.
 - **Warns before a login runs out.** It also warns about clips of other people's videos (copyright).

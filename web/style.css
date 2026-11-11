@@ -269,6 +269,10 @@ a.row:hover, .row.hoverable:hover { background: #1f1f1f; }
 .clip-video video, .clip-video .gone { width: 140px; aspect-ratio: 9 / 16; border-radius: var(--r-md); background: #000;
                                        display: block; object-fit: cover; border: 1px solid var(--line-soft); }
 .clip-video .gone { display: grid; place-items: center; color: var(--text-3); font-size: var(--fs-xs); text-align: center; padding: 8px; }
+.cover { display: grid; gap: 6px; margin-top: 12px; width: 140px; }
+.cover-head { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--fs-xs); font-weight: 600; color: var(--text-2); }
+.cover .btn { width: 100%; justify-content: flex-start; }
+.cover-text { font-size: var(--fs-xs); color: var(--text-3); line-height: 1.45; }
 .clip-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
 .clip-head .grow { flex: 1; min-width: 0; }
 .clip-head h2 { font-size: 16px; }

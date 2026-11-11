@@ -147,6 +147,8 @@ Page**. Both are free switches.
 | "Instagram: none found" after connecting | Instagram isn't a Creator/Business account, or isn't linked to the Page (Part 0). Fix that, then **Reconnect**. |
 | "A permission is missing" | Click **Reconnect** and, on Meta's page, allow everything and pick your Page and Instagram. |
 | A yellow dot: "login ends on …" | Instagram's login lasts about 60 days, and Meta asks for a fresh login every 90 days. Click **Reconnect** on the Accounts page; it takes a minute. PostKaro warns you 7 days and 1 day before. |
+| "Custom thumbnail not set on YouTube" | Custom thumbnails need a verified channel. Verify yours (phone number) at <https://www.youtube.com/verify>, then set the thumbnail again. |
+| "Custom thumbnail not set on Facebook", a permission is missing | Since PostKaro 0.3, Facebook thumbnails need two more permissions. Press **Reconnect** on the Accounts page and allow everything. |
 | "today's YouTube allowance" is used up | Your Google project can upload 100 videos a day. It resets at midnight US Pacific time. |
 
 **Where things are kept**

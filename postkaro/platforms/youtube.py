@@ -276,3 +276,23 @@ class YouTube(Platform):
 
     def publish(self, post, account):
         raise PlatformError('YouTube publishes by itself.')
+
+    def apply_cover(self, post, account):
+        """The clip's custom thumbnail (after processing, which poll() has seen by then). 50 quota units."""
+        from pathlib import Path
+        from googleapiclient.errors import HttpError
+        from googleapiclient.http import MediaFileUpload
+        c = post['clip']
+        if not c.get('cover') or post['remote'].get('cover_v') == c.get('cover_v') or not Path(c['cover']).exists():
+            return None
+        try:
+            _build(_creds(account)).thumbnails().set(
+                videoId=post['remote_id'], media_body=MediaFileUpload(c['cover'], mimetype='image/jpeg')).execute()
+        except HttpError as e:
+            status = int(getattr(e.resp, 'status', 0) or 0)
+            if status >= 500 or status == 429:
+                raise PlatformError(f'YouTube is busy ({status}).', retry=True)
+            why = ('your channel needs custom thumbnails switched on: verify it at youtube.com/verify, then set the '
+                   'thumbnail again') if status == 403 else _short(e)
+            return {'cover_v': c['cover_v'], 'note': f'Custom thumbnail not set on YouTube: {why}.'}
+        return {'cover_v': c['cover_v'], 'note': None}

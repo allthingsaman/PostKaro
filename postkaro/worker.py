@@ -93,8 +93,9 @@ def step(pid, now, s):
             progress[pid] = 0.0
             remote = plat.upload(p, acc, lambda f: progress.__setitem__(pid, max(0.0, min(1.0, f))))
             progress.pop(pid, None)
+            note = remote.pop('note', None)
             db.update_post(pid, state='processing', remote_id=str(remote.get('id')), remote=remote,
-                           prepared_at=db.iso(now), attempts=0, next_try=None)
+                           prepared_at=db.iso(now), attempts=0, next_try=None, note=note)
             db.log(pid, 'uploaded')
         elif st == 'processing':
             status, info = plat.poll(p, acc)
@@ -102,15 +103,18 @@ def step(pid, now, s):
                 if p['prepared_at'] and now - db.parse(p['prepared_at']) > PROCESSING_LIMIT:
                     fail(p, f'{settings.NAMES[p["platform"]]} was still processing the video after 2 hours.')
             elif status == 'ready':
+                touch_cover(p, plat, acc)
                 db.update_post(pid, state='waiting', attempts=0, next_try=None)
                 if not plat.remote_schedule and (when is None or now >= when):
                     step_publish(p, now, s, grace)
             elif status == 'live':
+                touch_cover(p, plat, acc)
                 live(p, info)
             else:
                 fail(p, info or 'The platform rejected the video.')
         elif st == 'waiting':
             if plat.remote_schedule:
+                touch_cover(p, plat, acc)                   # a thumbnail changed after the upload
                 if when and now < when:
                     return
                 status, info = plat.poll(p, acc)
@@ -146,6 +150,26 @@ def step(pid, now, s):
         progress.pop(pid, None)
         db.log(pid, 'error: ' + traceback.format_exc(limit=3))
         problem(p, st, PlatformError(f'Unexpected problem: {e}', retry=True), now)
+
+
+def touch_cover(p, plat, acc):
+    """Set the clip's custom thumbnail on the uploaded video when the platform can take it. Never stops a
+    post: any problem becomes a note on it (network trouble: tried again next round)."""
+    try:
+        r = plat.apply_cover(p, acc)
+    except PlatformError as e:
+        if e.retry:
+            return
+        r = {'cover_v': p['clip'].get('cover_v'), 'note': f'Custom thumbnail not set: {e}'}
+    except Exception as e:                                  # a bug here must not cost the post
+        db.log(p['id'], 'cover error: ' + traceback.format_exc(limit=3))
+        r = {'cover_v': p['clip'].get('cover_v'), 'note': f'Custom thumbnail not set: {e}'}
+    if not r:
+        return
+    note = r.pop('note', None)
+    p['remote'] = {**p['remote'], **r}
+    db.update_post(p['id'], remote=p['remote'], note=note)
+    db.log(p['id'], f'thumbnail: {note or "set"}')
 
 
 def step_publish(p, now, s, grace):
