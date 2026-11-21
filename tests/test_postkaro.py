@@ -214,6 +214,28 @@ class TestPlanner(unittest.TestCase):
     def setUp(self):
         reset_db()
 
+    def test_spread_over_even_gaps(self):
+        """10 clips in 10 minutes: the first when Schedule is pressed, then one a minute; 100 in a day: 14 min 24 s."""
+        now = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
+        times, gap = planner.spread(list(range(1, 11)), 10, now)
+        self.assertEqual(gap, timedelta(minutes=1))
+        self.assertIsNone(times[1])
+        self.assertEqual([times[k] - now for k in (2, 3, 10)], [timedelta(minutes=m) for m in (1, 2, 9)])
+        _, gap = planner.spread(list(range(100)), 24 * 60, now)
+        self.assertEqual(gap, timedelta(minutes=14, seconds=24))
+
+    def test_spread_over_too_short(self):
+        with self.assertRaises(ValueError) as cm:
+            planner.spread(list(range(200)), 10, datetime(2026, 11, 20, tzinfo=UTC))
+        self.assertIn('at least 200 minutes', str(cm.exception))
+        with self.assertRaises(ValueError):
+            planner.spread([], 60, datetime(2026, 11, 20, tzinfo=UTC))
+
+    def test_day_peak(self):
+        self.assertEqual(planner.day_peak(100, timedelta(minutes=14, seconds=24)), 100)   # 100 in one day: fits
+        self.assertEqual(planner.day_peak(150, timedelta(minutes=14, seconds=24)), 101)   # more would pass 100
+        self.assertEqual(planner.day_peak(30, timedelta(hours=2)), 13)
+
     def test_spread_best_first(self):
         s = settings.load()
         now = datetime(2026, 11, 11, 10, 0, tzinfo=UTC)       # 15:30 in India
@@ -486,6 +508,44 @@ class TestServer(Base):
         p = db.post(pid)
         self.assertEqual((p['state'], p['remote_id'], p['body']), ('scheduled', None, 'new words'))
         self.assertIn(('cancel', pid), self.fakes['facebook'].calls)
+
+    def test_spread_over_fills_even_times(self):
+        """2 clips over 10 minutes: clip 1 has no time (goes when Schedule is pressed), clip 2 five minutes on,
+        on every ticked platform; a clip with all platforms off is left out; nothing is scheduled yet."""
+        self.c.cookies.set('pk', self.key)
+        self.connect_all()
+        kit.import_kit(clipkaro_project(self.tmp))
+        bid = db.one('SELECT id FROM batches')['id']
+        before = db.now()
+        r = self.c.post(f'/api/batch/{bid}/spread', json={'minutes': 10}, headers=self.h)
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual((r.json()['clips'], r.json()['gap'], r.json()['warnings']), (2, 300.0, []))
+        rows = db.rows('SELECT p.when_utc, p.state, c.no FROM posts p JOIN clips c ON c.id=p.clip_id WHERE p.enabled=1')
+        self.assertTrue(all(x['state'] == 'draft' for x in rows))
+        self.assertTrue(all(x['when_utc'] is None for x in rows if x['no'] == 1))
+        self.assertTrue(any(x['no'] == 2 for x in rows))
+        for x in (x for x in rows if x['no'] == 2):
+            self.assertAlmostEqual((db.parse(x['when_utc']) - before).total_seconds(), 300, delta=5)
+        r = self.c.post(f'/api/batch/{bid}/spread', json={'minutes': 1}, headers=self.h)
+        self.assertEqual(r.status_code, 400)                          # 2 clips need at least 2 minutes
+
+    def test_platform_switch_for_every_clip(self):
+        self.c.cookies.set('pk', self.key)
+        self.connect_all()
+        kit.import_kit(clipkaro_project(self.tmp))
+        bid = db.one('SELECT id FROM batches')['id']
+        done = db.one("SELECT id FROM posts WHERE platform='facebook'")['id']
+        db.update_post(done, state='scheduled')                       # already scheduled: left alone
+        r = self.c.post(f'/api/batch/{bid}/platform', json={'platform': 'facebook', 'enabled': False}, headers=self.h)
+        self.assertEqual(r.status_code, 200, r.text)
+        fb = db.rows("SELECT id, enabled FROM posts WHERE platform='facebook'")
+        self.assertEqual({x['id']: x['enabled'] for x in fb if x['id'] != done}, {x['id']: 0 for x in fb if x['id'] != done})
+        self.assertEqual(db.post(done)['enabled'], 1)
+        self.assertTrue(all(x['enabled'] == 1 for x in db.rows("SELECT enabled FROM posts WHERE platform='youtube'")))
+        self.c.post(f'/api/batch/{bid}/platform', json={'platform': 'facebook', 'enabled': True}, headers=self.h)
+        self.assertTrue(all(x['enabled'] == 1 for x in db.rows("SELECT enabled FROM posts WHERE platform='facebook'")))
+        self.assertEqual(self.c.post(f'/api/batch/{bid}/platform', json={'platform': 'tiktok', 'enabled': True},
+                                     headers=self.h).status_code, 400)
 
     def test_post_now_ignores_the_set_time(self):
         self.c.cookies.set('pk', self.key)

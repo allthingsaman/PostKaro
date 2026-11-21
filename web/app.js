@@ -304,9 +304,32 @@ async function home() {
 
 // ---------------------------------------------------------------- Post: one video
 
+let spreadPick = {n: '1', unit: '1440'};               // "Spread over": the last choice (1 day to start)
+const SPREAD_UNITS = [['1', 'minutes'], ['60', 'hours'], ['1440', 'days']];
+
+function fmtGap(sec) {                                  // 864 -> "14 min 24 s", 7200 -> "2 h"
+  sec = Math.round(sec);
+  const d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return [d && `${d} d`, h && `${h} h`, m && `${m} min`, s && !d && !h && `${s} s`].filter(Boolean).join(' ') || '0 s';
+}
+
+function batchBar(live) {
+  // one switch per platform for every clip of the video that is still a draft
+  const parts = PLATS.map(p => {
+    const d = live.map(c => c.posts[p]).filter(x => x && x.state === 'draft');
+    if (!d.length) return '';
+    const on = d.filter(x => x.enabled).length;
+    return `<label class="switch"><input type="checkbox" data-batch-plat="${p}" ${on === d.length ? 'checked' : ''}
+        data-mixed="${on > 0 && on < d.length ? 1 : 0}" aria-label="${NAMES[p]} for every clip"><span class="track"></span>${pf(p)}
+        <span class="plat-count">${on} of ${d.length}</span></label>`;
+  }).join('');
+  return parts ? `<div class="batch-bar"><span class="batch-bar-label">Platforms for all clips</span>${parts}</div>` : '';
+}
+
 async function batchPage(id) {
   const b = await api('/batch/' + id);
   const live = b.clips.filter(c => !c.removed), removed = b.clips.filter(c => c.removed);
+  clearInterval(timer);                                  // a redraw keeps one refresh timer, not one more each time
   $('#main').innerHTML = `
     <div class="sticky-head">
       <a class="back" href="#/">${icon('arrow-left', 14)}All videos</a>
@@ -315,10 +338,18 @@ async function batchPage(id) {
           <span>${live.length} clip${live.length === 1 ? '' : 's'}</span>
           ${b.source_url ? `<a class="link" href="${esc(b.source_url)}" target="_blank" rel="noopener">Full video</a>` : ''}</div></div>
         <div class="actions">
+          <div class="spread" title="Every clip with a platform on, one even gap apart, #1 first. The first goes when you press Schedule.">
+            <label for="sp-n">Spread over</label>
+            <input id="sp-n" class="input num" type="number" min="1" max="999" step="1" value="${esc(spreadPick.n)}">
+            <select id="sp-unit" class="select" aria-label="Minutes, hours or days">${SPREAD_UNITS.map(([v, l]) =>
+              `<option value="${v}" ${spreadPick.unit === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+            <button class="btn" id="spread">${icon('clock', 16)}Spread</button>
+          </div>
           <button class="btn" id="plan" title="Fill in times: your usual time on each platform, best clips first">${icon('calendar-clock', 16)}Plan for me</button>
           <button class="btn btn-primary" id="sched">${icon('send', 16)}<span id="sched-label">Schedule</span></button>
         </div></div>
     </div>
+    ${batchBar(live)}
     ${b.own ? '' : `<div class="notice warn batch-notice">${icon('triangle-alert')}<span>This video is from
       <b>${esc(b.channel)}</b>, not one of your channels. Clips of other people's videos can get copyright claims or
       less reach. You decide. Your own channels are listed in <a class="link" href="#/accounts">Accounts</a>.</span></div>`}
@@ -329,6 +360,13 @@ async function batchPage(id) {
       <div class="list">${removed.map(c => `<div class="row"><span class="grow"><span class="title">#${c.no} ${esc(c.title)}</span></span>
         <button class="btn btn-sm" data-restore="${c.id}">${icon('undo-2', 14)}Restore</button></div>`).join('')}</div></details></section>` : ''}`;
   wireBatch(id);
+  $$('[data-batch-plat][data-mixed="1"]').forEach(i => { i.indeterminate = true; });
+  $$('[data-batch-plat]').forEach(inp => inp.onchange = async () => {
+    try {
+      await api(`/batch/${id}/platform`, 'POST', {platform: inp.dataset.batchPlat, enabled: inp.checked});
+      await batchPage(id);
+    } catch (e) { toast(e.message, 'bad'); }
+  });
   updateSchedLabel();
   refreshHints();
   timer = setInterval(() => refreshStates(id), 5000);
@@ -523,6 +561,20 @@ function wireBatch(bid) {
       await busy(e.currentTarget, () => api(`/batch/${bid}/plan`, 'POST', {}));
       await batchPage(bid);
       toast('Times filled in. Change any you like, then schedule.', 'ok');
+    } catch (err) { toast(err.message, 'bad'); }
+  };
+  $('#spread').onclick = async e => {
+    const n = Number($('#sp-n').value), unit = $('#sp-unit').value;
+    spreadPick = {n: $('#sp-n').value, unit};
+    if (!(n > 0)) { $('#sp-n').focus(); return toast('Type how many minutes, hours or days to spread the clips over.', 'bad'); }
+    try {
+      const r = await busy(e.currentTarget, () => api(`/batch/${bid}/spread`, 'POST', {minutes: n * Number(unit)}));
+      await batchPage(bid);
+      const word = {1: 'minute', 60: 'hour', 1440: 'day'}[unit] + (n === 1 ? '' : 's');
+      toast(`${r.clips} clips over ${n} ${word}: one every ${fmtGap(r.gap)}, #1 first (it goes when you press ` +
+            `Schedule). Check the times, then press Schedule.${r.instagram && n * Number(unit) > 60
+              ? ' Instagram posts need this computer on at their times.' : ''}`, 'ok', 12000);
+      r.warnings.forEach(w => toast(w, 'bad', 20000));
     } catch (err) { toast(err.message, 'bad'); }
   };
   $('#sched').onclick = e => scheduleAll(bid, e.currentTarget);

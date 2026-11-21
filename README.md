@@ -85,6 +85,19 @@ once, even where a time is typed in, and each goes live as soon as the platform 
 (usually a few minutes; how long the upload takes depends on your internet). Keep the laptop on until
 the Queue shows it live.
 
+**Turn a platform off for every clip:** the **Platforms for all clips** row at the top of a video's page
+has one switch per platform. Turn Facebook off there and it goes off on every clip that isn't scheduled
+yet; each clip's own switch still works for exceptions. "Some" (a half switch) means it is on for only
+some clips.
+
+**Spread every clip over a time:** type a number, pick minutes, hours or days in **Spread over**, and
+press **Spread**. PostKaro divides the time evenly between the clips that have a platform on, #1 first:
+10 clips over 10 minutes is one a minute, 100 clips over 1 day one every 14 min 24 s. Clip #1 goes when
+you press Schedule, and all of a clip's platforms share its time. Check the times, then press
+**Schedule**. It warns you when a plan passes a daily limit: about 100 YouTube uploads a day (PostKaro
+uploads YouTube posts right away and YouTube publishes each at its time) and 100 Instagram posts a day.
+Instagram posts need the laptop on at their times; YouTube and Facebook post by themselves.
+
 **How each platform goes live**
 
 | | Goes live at its time by itself | Laptop needed at that time? |

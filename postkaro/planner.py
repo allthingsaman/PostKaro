@@ -3,6 +3,8 @@
 Each platform on its own: the best-scored clips first, `per_day` clips a day at the user's usual times
 (settings "times"; a second clip on the same day goes 3 hours after the last usual time), starting with
 the first free time at least 20 minutes from now. Times already taken in the queue are skipped.
+
+"Spread over" (spread()): every clip of a video over a time the owner picks, one even gap apart.
 """
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -11,6 +13,28 @@ from . import db, settings
 
 LEAD = timedelta(minutes=20)       # time to upload before the first slot (Facebook needs 10 min ahead)
 CLASH = timedelta(minutes=30)      # two posts on one platform closer than this count as the same slot
+MIN_GAP = timedelta(minutes=1)     # "Spread over": never closer together than this
+
+
+def spread(clips, minutes, now):
+    """clips: clip ids in posting order (clip number order) -> ({clip id: UTC time}, gap).
+    The time is divided into one even gap: the first clip has no time (it goes out when Schedule is
+    pressed), the next one gap later, and so on, so the last goes out just before the time is up.
+    A clip's platforms all share its time."""
+    n = len(clips)
+    if not n:
+        raise ValueError('No clip has a platform switched on.')
+    if not minutes or minutes <= 0:
+        raise ValueError('Pick how long to spread the clips over.')
+    gap = timedelta(minutes=minutes) / n
+    if gap < MIN_GAP:
+        raise ValueError(f'{n} clips need at least {n} minutes (one a minute at most). Pick a longer time.')
+    return {c: (None if k == 0 else now + gap * k) for k, c in enumerate(clips)}, gap
+
+
+def day_peak(count, gap):
+    """The most of `count` posts, one every `gap`, that can fall inside any 24 hours."""
+    return min(count, int(timedelta(hours=24) / gap) + 1)
 
 
 def day_times(platform, s):

@@ -301,6 +301,45 @@ def plan(request, body):
     return batch_view(bid)
 
 
+YOUTUBE_DAY = 100                  # uploads a day for one Google project (youtube.py, quotaExceeded)
+INSTAGRAM_DAY = 100                # published posts a day for one Instagram account
+
+
+def spread(request, body):
+    """"Spread over": even times for the batch's ticked drafts, in clip number order (still drafts:
+    Schedule sends them). Warns when a daily limit would be passed."""
+    bid = int(request.path_params['id'])
+    rows = db.rows("SELECT p.id, p.platform, c.id clip FROM posts p JOIN clips c ON c.id=p.clip_id "
+                   "WHERE c.batch_id=? AND c.removed=0 AND p.enabled=1 AND p.state='draft' ORDER BY c.no, p.id", (bid,))
+    order = list(dict.fromkeys(r['clip'] for r in rows))           # each clip once, in clip number order
+    times, gap = planner.spread(order, float(body.get('minutes') or 0), db.now())
+    for r in rows:
+        db.update_post(r['id'], when_utc=db.iso(times[r['clip']]))
+    count = {p: sum(r['platform'] == p for r in rows) for p in ('youtube', 'instagram', 'facebook')}
+    warnings = []
+    peak = planner.day_peak(count['instagram'], gap)
+    if peak > INSTAGRAM_DAY:
+        warnings.append(f'Up to {peak} Instagram posts fall in one day, and Instagram allows {INSTAGRAM_DAY} a day '
+                        'per account, so the rest would fail. Spread over more time.')
+    if count['youtube'] > YOUTUBE_DAY:
+        warnings.append(f"{count['youtube']} YouTube posts: PostKaro uploads them all right away (YouTube makes each "
+                        f'one live at its time), and your Google project may upload {YOUTUBE_DAY} a day, so the rest '
+                        'would fail until the next day.')
+    return {'clips': len(order), 'gap': gap.total_seconds(), 'warnings': warnings, 'instagram': count['instagram']}
+
+
+def batch_platform(request, body):
+    """One platform on or off for every clip of the batch that is still a draft (scheduled and live
+    posts are left as they are)."""
+    bid = int(request.path_params['id'])
+    plat = body.get('platform')
+    if plat not in ('youtube', 'instagram', 'facebook'):
+        raise ApiError('Unknown platform.')
+    db.run("UPDATE posts SET enabled=? WHERE platform=? AND state='draft' AND clip_id IN "
+           "(SELECT id FROM clips WHERE batch_id=? AND removed=0)", (int(bool(body.get('enabled'))), plat, bid))
+    return batch_view(bid)
+
+
 def schedule(request, body):
     """Schedule the given posts (or every ticked draft of a batch). Posts with problems are skipped and
     listed with their reasons. now=True ("Post now"): every one goes out at once, whatever time it had."""
@@ -617,6 +656,8 @@ def routes():
         R('/api/state', api(state)), R('/api/batches', api(batches)),
         R('/api/batch/{id:int}', api(batch)), R('/api/import', api(import_), methods=['POST']),
         R('/api/batch/{id:int}/plan', api(plan), methods=['POST']),
+        R('/api/batch/{id:int}/spread', api(spread), methods=['POST']),
+        R('/api/batch/{id:int}/platform', api(batch_platform), methods=['POST']),
         R('/api/schedule', api(schedule), methods=['POST']),
         R('/api/post/{id:int}', api(edit_post), methods=['PATCH']),
         R('/api/post/{id:int}/{action}', api(post_action), methods=['POST']),
