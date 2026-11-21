@@ -4,30 +4,40 @@
 
 # PostKaro 📮
 
-Post your clips to **YouTube Shorts**, **Instagram Reels** and your **Facebook Page** from your own laptop.
-PostKaro is ClipKaro's partner: ClipKaro makes the clips, PostKaro posts them. It also works on its own
-with any ClipKaro project folder.
+**Post your clips to YouTube Shorts, Instagram Reels and your Facebook Page, from your own laptop.**
+ClipKaro makes the clips. PostKaro posts them. It also works with any ClipKaro project folder.
 
-- **One page in your browser.** Every clip already has its title and caption for each platform. Change
-  anything, remove clips you don't want, press **Schedule**.
-- **Each platform at its own time.** "Plan for me" spreads the clips over the coming days at your usual
-  times, best clips first.
-- **Custom thumbnails.** Pick a frame from the clip, or upload an image. YouTube and Facebook take either;
-  Instagram takes a frame from the video (an uploaded image would need a public web link).
-- **Checks every post.** Each post ends up as a live link, or a plain error with a **Retry** button. A
-  desktop notification tells you either way.
-- **Warns before a login runs out.** It also warns about clips of other people's videos (copyright).
-  Warnings never block you: you decide.
-- **Fully local.** No server of ours and no outside posting service. Your logins are encrypted on your
-  laptop, and the key sits in your computer's password store.
+<p align="center">
+  <a href="https://youtu.be/Dlq4z26w1QM"><img src="https://img.youtube.com/vi/Dlq4z26w1QM/maxresdefault.jpg" alt="Watch the video guide on YouTube: I Built an AI That Clips Your GTA 6 Stream While You're Live (Windows Setup + Installation)" width="640"></a>
+</p>
+<p align="center"><b>▶ <a href="https://youtu.be/Dlq4z26w1QM">Watch the video guide</a></b> (16 min): how to install ClipKaro and
+PostKaro on Windows and use them yourself.</p>
+
+## What it does
+
+- **One page in your browser.** Every clip already has its title and caption for each platform. You
+  check them, change what you like, and press **Schedule**.
+- **You choose the time.** Post right away, type a time, let PostKaro pick good times, or spread all
+  the clips evenly over a few hours or days.
+- **You choose where.** Turn a platform on or off for one clip or for all clips. With more than one
+  channel, account or Page, pick which one gets each post.
+- **It tells you what happened.** Every post ends as a link to the live post, or as a plain-words
+  error with a **Retry** button. A desktop notification tells you either way.
+- **It warns, it never blocks.** It warns before a login runs out, and when a clip comes from someone
+  else's video (copyright). You decide.
+- **Everything stays on your laptop.** There's no PostKaro server and no outside posting service. Your
+  logins are locked on your laptop, and the key sits in your computer's password store.
 
 ## Set up (once)
 
-Works on **Windows, Mac and Linux**. You need Python 3.11 or newer: use the same one as for ClipKaro.
-Put PostKaro **next to** the ClipKaro folder, not inside it. Easiest: in Claude Code (inside ClipKaro),
-say **"install PostKaro too"**. By hand:
+Works on **Windows, Mac and Linux**. You need Python 3.11 or newer (the same one you use for
+ClipKaro). Put the PostKaro folder **next to** the ClipKaro folder, not inside it.
 
-**Windows** (PowerShell):
+**Easiest way:** in Claude Code, inside the ClipKaro folder, say **"install PostKaro too"**.
+
+**By hand:**
+
+Windows (PowerShell):
 ```powershell
 git clone https://github.com/allthingsaman/PostKaro.git
 cd PostKaro
@@ -35,7 +45,7 @@ python install.py
 python run.py open
 ```
 
-**Mac:**
+Mac:
 ```bash
 git clone https://github.com/allthingsaman/PostKaro.git
 cd PostKaro
@@ -43,102 +53,201 @@ python3.13 install.py
 python3 run.py open
 ```
 
-**Linux:** the same, with `python3`.
+Linux: the same as Mac, with `python3` instead of `python3.13`.
 
-`install.py` makes a private Python environment (`.venv`) and sets PostKaro to start by itself when you
-log in: on Windows a login entry for your user, on a Mac a login item (macOS shows "Background Items
-Added"), on Linux a systemd user service. That keeps the page link working, and lets Instagram posts go
-out at their time. `--no-service` skips that.
+**What `install.py` does:**
+- It makes a private Python environment for PostKaro (the `.venv` folder).
+- It makes PostKaro start by itself when you log in to your computer. That keeps the page link
+  working, and lets Instagram posts go out at their time. Add `--no-service` if you don't want that.
+- Your logins go into your computer's own password store: Windows Credential Manager, the Mac
+  Keychain, or the Linux keyring. On a Mac, if it asks whether Python may use the "postkaro" item,
+  choose **Always Allow**.
+- Thumbnails use ffmpeg, the same one ClipKaro uses. PostKaro finds it by itself.
 
-- **Logins** stay in your computer's own password store: Windows Credential Manager, the Mac Keychain,
-  or the Linux keyring. On a Mac, if it asks whether Python may use the "postkaro" Keychain item, choose
-  **Always Allow**.
-- **Thumbnails** use ffmpeg, the same one ClipKaro uses (on a Mac Homebrew's `ffmpeg-full`, which
-  PostKaro finds by itself).
+**Then connect your accounts** on the **Accounts** page. Follow
+**[docs/connect-accounts.md](docs/connect-accounts.md)** step by step. It takes about 30–45 minutes,
+and you only do it once.
 
-Then connect your accounts on the **Accounts** page. The step-by-step guide is
-**[docs/connect-accounts.md](docs/connect-accounts.md)**: about 30–45 minutes, once.
+## Post your clips, step by step
 
-## Every day
+**1. Open the video in PostKaro.** Use any one of these:
+- When ClipKaro finishes, it ends with a **"Post them"** link. Click it.
+- On PostKaro's **Post** page, paste a ClipKaro project folder into **Add a video**.
+- In a terminal: `python3 run.py open /path/to/Claude_Clipper/output/<project>`
 
-- **From ClipKaro:** finished clips end with a **"Post them"** link. Click it.
-- **An older ClipKaro video:** `python3 run.py open /path/to/Claude_Clipper/output/<project>`
+**2. Check the words.** Each clip has one box per platform, with its own title and caption. Change
+anything you like. A counter turns red when a text is too long for that platform.
 
-On the page:
-1. Check each clip's text for each platform. The counters turn red over a platform's limit.
-   - **Which channel or account:** with more than one YouTube channel, Instagram account or Facebook
-     Page connected, each box has a "to …" list. It starts on your default (Accounts page); pick another
-     for just this post. It can change until you press Schedule. The Queue shows where each post goes.
-2. Press **Plan for me**, or type times yourself:
-   - **Time for all platforms** (above each clip's three boxes) puts the same time on YouTube, Instagram
-     and Facebook. Change one box to give that platform its own time.
-   - Under every time PostKaro shows roughly when it goes live: "under 1 hour", "about 5 hours",
-     "about 3 days".
-   - **An empty time** means "as soon as I press Schedule": PostKaro starts uploading at once, and the
-     clip goes live as soon as the platform has finished processing it (usually a few minutes). Keep
-     the laptop on until it shows as Live.
-3. Press **Schedule** (the button says how many posts). The **Queue** shows what's waiting; **Posted**
-   shows the links.
+**3. Choose where each clip goes.**
+- Each box has an on/off switch for its platform.
+- **Platforms for all clips**, at the top of the page, has one switch per platform. Turn Facebook off
+  there, and it goes off on every clip that isn't scheduled yet. Each clip's own switch still works.
+  A half-filled switch with "N of M" means it's on for only some clips.
+- If you connected more than one YouTube channel, Instagram account or Facebook Page, each box has a
+  **"to …"** list. It starts on your default account. Pick another one for just this post.
 
-**Post one clip right now:** press **Post now** at the top of the clip. Its ticked platforms upload at
-once, even where a time is typed in, and each goes live as soon as the platform has processed it
-(usually a few minutes; how long the upload takes depends on your internet). Keep the laptop on until
-the Queue shows it live.
+**4. Pick the times.** See the next section. Under every time, PostKaro shows roughly when it goes
+live, like "under 1 hour" or "about 3 days". It turns red if the time has already passed.
 
-**Turn a platform off for every clip:** the **Platforms for all clips** row at the top of a video's page
-has one switch per platform. Turn Facebook off there and it goes off on every clip that isn't scheduled
-yet; each clip's own switch still works for exceptions. "Some" (a half switch) means it is on for only
-some clips.
+**5. Press Schedule.** The blue button says how many posts it will schedule. Press it **once**.
 
-**Spread every clip over a time:** type a number, pick minutes, hours or days in **Spread over**, and
-press **Spread**. PostKaro divides the time evenly between the clips that have a platform on, #1 first:
-10 clips over 10 minutes is one a minute, 100 clips over 1 day one every 14 min 24 s. Clip #1 goes when
-you press Schedule, and all of a clip's platforms share its time. Check the times, then press
-**Schedule**. It warns you when a plan passes a daily limit: about 100 YouTube uploads a day (PostKaro
-uploads YouTube posts right away and YouTube publishes each at its time) and 100 Instagram posts a day.
-Instagram posts need the laptop on at their times; YouTube and Facebook post by themselves.
+**6. Watch it go.** The **Queue** page shows what's waiting. The **Posted** page shows the links to
+your live posts.
 
-**How each platform goes live**
+## Picking the times
 
-| | Goes live at its time by itself | Laptop needed at that time? |
+| What you want | What to do |
+|---|---|
+| Post as soon as possible | Leave the time empty, then press **Schedule**. |
+| Post one clip right now | Press **Post now** at the top of that clip. |
+| One time for all platforms of a clip | Type it in **Time for all platforms**, above the clip's boxes. |
+| A different time on one platform | Type a time in that platform's own box. |
+| Let PostKaro choose | Press **Plan for me**. |
+| Even gaps over a few hours or days | Use **Spread over**. |
+
+**Empty time:** PostKaro starts uploading as soon as you press Schedule. The clip goes live once the
+platform has finished processing it, usually in a few minutes. Keep the laptop on until the Queue
+shows **Live**.
+
+**Post now:** it posts that one clip on its ticked platforms straight away, even if a time is typed in.
+How long the upload takes depends on your internet.
+
+**Plan for me:** it fills in times for you. The best clips go first, at your usual time on each
+platform, a few clips a day. You set the usual times and "Clips per day" on the Accounts page.
+
+**Spread over:** type a number, pick **minutes**, **hours** or **days**, and press **Spread**.
+PostKaro divides that time evenly between the clips, starting with clip #1:
+- 10 clips over 10 minutes: one clip every minute.
+- 100 clips over 1 day: one clip every 14 minutes 24 seconds.
+
+Clip #1 goes when you press Schedule. All platforms of a clip get the same time. Spread only fills
+in the times. Check them, then press **Schedule** straight away, because the times count from the
+moment you pressed Spread. PostKaro warns you if the plan goes over a daily limit (see
+[Daily limits](#daily-limits)).
+
+> **Tip for many clips:** over 1 day, more than 100 clips go over Instagram's 100 posts a day. Spread
+> them over 2 days or more.
+
+## Looking at a clip
+
+- **Preview** opens the clip on a big screen. Use the arrow keys (or the buttons) for the previous and
+  next clip, and **Esc** to close it. **Use this frame as thumbnail** works there too.
+- **Thumbnail:** pause the video on the frame you like and press **Use this frame**, or press **Upload
+  image**. YouTube and Facebook take either. Instagram takes only a frame from the video.
+- **Don't want a clip?** Press the bin icon to remove it. Removed clips wait under **Removed clips** at
+  the bottom of the page. Press **Restore** to bring one back.
+
+## The Queue: what the words mean
+
+| Word | What it means |
+|---|---|
+| **Scheduled** | Waiting its turn to upload. |
+| **Uploading 40%** | Sending the video now. |
+| **Processing** | The platform is preparing the video. |
+| **Uploaded, live at 18:00** | YouTube or Facebook has it, and makes it live at that time by itself. |
+| **Ready, publishes 18:00** | Instagram has it, and PostKaro publishes it at that time. Keep the laptop on. |
+| **Publishing** | Going live now. |
+| **Live** | Done. Press **Open** to see the post. |
+| **Failed** | Something went wrong. The reason is written under it. |
+| **Missed** | The laptop was off at its time. |
+| **Cancelled** | You cancelled it. |
+
+**The buttons:**
+- **Cancel:** stops a post. If it was already uploaded, PostKaro removes it from the platform.
+- **Retry:** tries a failed post again.
+- **Back to drafts:** puts a failed or cancelled post back on the Post page. There you can change its
+  text, time or channel, and schedule it again.
+- **Post now / New time / Skip:** for a missed post. Post it at once, give it a new time, or let it go.
+
+The Queue shows each post as **"#N Short title"**. The same #N on YouTube, Instagram and Facebook means
+it's the same clip. Under that you see the posted title or caption, and where it goes ("to …").
+
+## How each platform goes live
+
+| Platform | Goes live at its time by itself? | Laptop needed at that time? |
 |---|---|---|
-| YouTube | yes: uploaded at once as private, YouTube makes it public at the time | no |
-| Facebook Page | yes: uploaded at once, Facebook publishes it (10 minutes to 29 days ahead) | no |
-| Instagram | no: Instagram can't schedule | **yes**. PostKaro uploads up to a day before and publishes at the time. If the laptop was off, it asks you what to do (or posts at once, if you choose that on the Accounts page). |
+| YouTube | **Yes.** PostKaro uploads it right away as private, and YouTube makes it public at its time. | No |
+| Facebook Page | **Yes.** PostKaro uploads it right away, and Facebook publishes it at its time (10 minutes to 29 days ahead). | No |
+| Instagram | **No.** Instagram can't schedule. PostKaro uploads it up to a day before, then publishes it at its time. | **Yes** |
 
-## Commands
+If the laptop was off at an Instagram post's time, PostKaro asks you what to do (the post shows as
+**Missed**). If you'd rather it posts by itself when the laptop is back on, change "Instagram, if this
+computer was off" on the Accounts page.
 
-```
-python3 run.py open [folder | post.json]   open the page (and add a ClipKaro project)
-python3 run.py status                      accounts, queue, and whether PostKaro runs
-python3 run.py check                       check every login now
-python3 run.py service on | off | status   start by itself at login
-python3 run.py serve                       run it in this terminal (to see errors)
-python3 run.py post-now <folder> [--dry]   (ClipKaro live clipping) add a project and post it everywhere now
-```
+## When something goes wrong
 
-## Limits worth knowing
+| What you see | What it means | What to do |
+|---|---|---|
+| An Instagram post says "Instagram's upload server could not store the video" | Instagram's upload server was too slow (Meta error 1363008). It's on Meta's side, not yours. | Nothing. PostKaro tries again by itself after 1, 2, 5, 15, 30, 60 and 120 minutes, and the error says when the next try is. |
+| A YouTube post says "used up today's YouTube allowance" | Your Google app can upload 100 videos a day. | Press **Retry** after YouTube's daily reset: midnight in California (1:30 pm in India). The post keeps its time. |
+| **Reconnect soon** on the Accounts page | A login is about to run out (Instagram's lasts about 60 days). PostKaro also sends a notification 7 days and 1 day before. | Press **Reconnect** on that account. |
+| **Login failed** on the Accounts page | The login no longer works. | Press **Reconnect**, then **Retry** on the failed posts. |
+| A dark warning about "not one of your channels" | The clip comes from someone else's video. It may get a copyright claim or less reach. | Your choice. Add your own channels under **My channels** on the Accounts page, so their videos get no warning. |
+| **Video file not found** | The clip's video file was moved or deleted. | Put the file back, or add the video again. |
+
+Short hiccups, like a dropped internet connection, are tried again by themselves after 1, 5 and 15
+minutes. If a post still fails after that, press **Retry**.
+
+## Accounts and settings
+
+The **Accounts** page lists your YouTube channels, Instagram accounts and Facebook Pages.
+- **Default:** new posts go to this account. Press **Make default** on another one to change it.
+- **Add channel:** connect another YouTube channel.
+- **Reconnect:** log in again (one Meta login connects Instagram and Facebook together).
+- The round-arrow button checks a login now. The plug button disconnects an account.
+
+Under **Posting defaults** on the same page:
+
+| Setting | What it does |
+|---|---|
+| Time zone | The times you type and see are in this zone. |
+| Clips per day | How many clips "Plan for me" puts on each platform per day. |
+| Usual times | Where "Plan for me" puts each day's first clip, per platform. |
+| My channels | Videos from these channels get no copyright warning. One per line. |
+| YouTube visibility | Public, Unlisted or Private. Unlisted is handy for a quiet test. |
+| Made for kids | YouTube asks this for every video. |
+| YouTube category | The category YouTube files the Short under. |
+| Tell subscribers | Lets YouTube notify your subscribers about new Shorts. |
+| "Full video" link | Adds "Full video: link" to new YouTube descriptions. |
+| Instagram, if this computer was off | **Ask me**, or **Post it when the computer is back on**. |
+
+## Daily limits
 
 | Platform | Limits |
 |---|---|
-| YouTube | Up to 3 minutes counts as a Short; longer becomes a normal video. Title up to 100 characters. Your Google project can upload 100 videos a day. |
-| Instagram | At most 5 hashtags. Caption up to 2,200 characters. About 100 posts a day. The login lasts about 60 days, and PostKaro reminds you to reconnect. |
-| Facebook | Pages only, not personal profiles. Reels must be 3–90 seconds. 30 Reels a day. |
+| YouTube | Up to 3 minutes counts as a Short; longer becomes a normal video. Titles up to 100 characters. Your Google app can upload **100 videos a day**. PostKaro uploads YouTube posts as soon as you press Schedule, so more than 100 YouTube clips at once go over it, however far apart their times are. |
+| Instagram | **About 100 posts a day.** At most 5 hashtags. Captions up to 2,200 characters. The login lasts about 60 days, and PostKaro reminds you to reconnect. |
+| Facebook | Pages only, not personal profiles. Reels must be 3–90 seconds. **30 Reels a day.** |
 
-## Your own website (needed once, for Google's login screen)
-Google only lets your own Google app leave "Testing" when it has a homepage and a privacy policy
-link. The `docs/` folder has both pages (`index.md`, `privacy.md`). Publish them for free with GitHub
+## Commands
+
+Run these in the PostKaro folder (on Windows, `python` instead of `python3`):
+
+```
+python3 run.py open [folder | post.json]   open the page (and add a ClipKaro project)
+python3 run.py status                      your accounts, the queue, and whether PostKaro runs
+python3 run.py check                       check every login now
+python3 run.py service on | off | status   start PostKaro by itself at login, or not
+python3 run.py serve                       run it in this window (to see errors)
+python3 run.py post-now <folder> [--dry]   (for ClipKaro's live clipping) add a project and post it everywhere now;
+                                           --dry only lists what it would post
+```
+
+## Your own website (needed once, for Google)
+
+Google lets your Google app leave "Testing" only when it has a homepage and a privacy policy link.
+The `docs/` folder has both pages (`index.md` and `privacy.md`). Put them online for free with GitHub
 Pages:
-1. Put this repo on GitHub under your account (public).
-2. Repo → **Settings** → **Pages** → **Source: Deploy from a branch**, branch **main**, folder **/docs**
-   → **Save**.
-3. A minute later the site is at `https://<github-user>.github.io/PostKaro/`. The privacy policy is
-   at `…/PostKaro/privacy.html`.
+1. Put this repo on GitHub under your account, as a public repo.
+2. Go to the repo's **Settings** → **Pages** → **Source: Deploy from a branch**. Pick branch **main**
+   and folder **/docs**, then press **Save**.
+3. A minute later, your site is at `https://<github-user>.github.io/PostKaro/`, and the privacy
+   policy is at `…/PostKaro/privacy.html`.
 
-## More
+## More help
 
-- [docs/connect-accounts.md](docs/connect-accounts.md): connecting YouTube, Instagram and Facebook
-- [docs/how-it-works.md](docs/how-it-works.md): how the parts fit, for anyone changing the code
-- [docs/post-kit.md](docs/post-kit.md): the `post.json` file ClipKaro (or anything else) hands over
+- [docs/connect-accounts.md](docs/connect-accounts.md): connecting YouTube, Instagram and Facebook, step by step
+- [docs/how-it-works.md](docs/how-it-works.md): how the parts fit together, for anyone changing the code
+- [docs/post-kit.md](docs/post-kit.md): the `post.json` file that ClipKaro (or anything else) hands to PostKaro
 
 Tests: `.venv/bin/python -m unittest discover -s tests` (Windows: `.venv\Scripts\python`).
